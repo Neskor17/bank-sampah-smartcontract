@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bank Sampah Chain — Dashboard Blockchain & Pencatatan Insentif</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <div class="container">
+    <header class="glass-header">
+      <div class="brand-group">
+        <div class="brand-logo">BS</div>
+        <div>
+          <h1>Bank Sampah Chain</h1>
+          <p class="subtitle">Dashboard Blockchain &amp; Pencatatan Insentif</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span id="modeBadge" class="badge">Mode: Auto-Detect</span>
+        <button id="connectWalletBtn" type="button" class="btn btn-primary">Hubungkan Wallet</button>
+      </div>
+    </header>
+
+    <nav class="glass-nav" aria-label="Navigasi Utama">
+      <button type="button" class="nav-link active" data-section="dashboardSection">Dashboard</button>
+      <button type="button" class="nav-link" data-section="setorSection">Setor Sampah</button>
+      <button type="button" class="nav-link" data-section="insentifSection">Insentif &amp; Warga</button>
+      <button type="button" class="nav-link" data-section="laporanSection">Laporan Transaksi</button>
+    </nav>
+
+    <div id="alertBox" class="alert hidden" role="alert"></div>
+
+    <!-- SECTION 1: DASHBOARD -->
+    <section id="dashboardSection" class="page-section active">
+      <div class="info-grid">
+        <div class="glass-card">
+          <h3>Akun Wallet Aktif</h3>
+          <p id="walletAddressText" class="mono-text">Belum terhubung</p>
+          <span class="hint-text">Akun default Ganache: 0xa22C526137E6597BFa11f0E807fe89823b7cFd2C</span>
+        </div>
+
+        <div class="glass-card">
+          <h3>Smart Contract</h3>
+          <p id="contractAddressText" class="mono-text">Menunggu deploy / konfigurasi</p>
+          <span class="hint-text">RPC Ganache: http://127.0.0.1:7545</span>
+        </div>
+
+        <div class="glass-card">
+          <h3>Status Koneksi</h3>
+          <p id="networkStatusStat" class="stat-highlight">Memeriksa...</p>
+          <span class="hint-text">Backend MySQL: bank_sampah11</span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="glass-card stat-card">
+          <span class="stat-label">Total Berat Sampah</span>
+          <strong id="totalWeightStat" class="stat-value">0 kg</strong>
+        </div>
+
+        <div class="glass-card stat-card">
+          <span class="stat-label">Saldo Insentif</span>
+          <strong id="incentiveBalanceStat" class="stat-value">0 Poin</strong>
+        </div>
+
+        <div class="glass-card stat-card">
+          <span class="stat-label">Total Transaksi</span>
+          <strong id="totalTxStat" class="stat-value">0</strong>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <h3>Tarif Insentif Sampah</h3>
+        <div class="rate-list">
+          <div class="rate-item">
+            <span>Plastik</span>
+            <strong>100 Poin / kg</strong>
+          </div>
+          <div class="rate-item">
+            <span>Kertas</span>
+            <strong>80 Poin / kg</strong>
+          </div>
+          <div class="rate-item">
+            <span>Logam</span>
+            <strong>200 Poin / kg</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: SETOR SAMPAH -->
+    <section id="setorSection" class="page-section">
+      <div class="glass-card form-card">
+        <h2>Catat Setoran Sampah</h2>
+        <p class="section-desc">Hitung estimasi insentif otomatis lalu simpan transaksi ke blockchain &amp; basis data.</p>
+
+        <form id="collectWasteForm" class="form-grid">
+          <div class="form-group">
+            <label for="usernameInput">Username Warga</label>
+            <input type="text" id="usernameInput" placeholder="contoh: warga_01" required />
+          </div>
+
+          <div class="form-group">
+            <label for="wasteTypeSelect">Jenis Sampah</label>
+            <select id="wasteTypeSelect" required>
+              <option value="plastik">Plastik (100 Poin/kg)</option>
+              <option value="kertas">Kertas (80 Poin/kg)</option>
+              <option value="logam">Logam (200 Poin/kg)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="weightInput">Berat (kg)</label>
+            <input type="number" id="weightInput" step="0.1" min="0.1" placeholder="contoh: 2.5" required />
+          </div>
+
+          <div class="form-group">
+            <label>Estimasi Insentif</label>
+            <div id="estimatedIncentiveBox" class="estimate-box">0 Poin</div>
+          </div>
+
+          <div class="form-actions full-width">
+            <button type="submit" class="btn btn-primary">Simpan Setoran Sampah</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- SECTION 3: INSENTIF & WARGA -->
+    <section id="insentifSection" class="page-section">
+      <div class="two-col-grid">
+        <div class="glass-card form-card">
+          <h2>Registrasi Warga</h2>
+          <p class="section-desc">Daftarkan akun warga dengan alamat wallet aktif.</p>
+
+          <form id="registerUserForm" class="form-grid">
+            <div class="form-group full-width">
+              <label for="regUsernameInput">Username Warga</label>
+              <input type="text" id="regUsernameInput" placeholder="contoh: sarah_warga" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="regWalletInput">Alamat Wallet</label>
+              <input
+                type="text"
+                id="regWalletInput"
+                value="0xa22C526137E6597BFa11f0E807fe89823b7cFd2C"
+                required
+              />
+            </div>
+
+            <div class="form-actions full-width">
+              <button type="submit" class="btn btn-primary">Daftarkan Warga</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="glass-card form-card">
+          <h2>Tarik Insentif</h2>
+          <p class="section-desc">Ajukan penarikan poin insentif yang telah terkumpul.</p>
+
+          <form id="withdrawForm" class="form-grid">
+            <div class="form-group full-width">
+              <label for="withdrawUsernameInput">Username Warga</label>
+              <input type="text" id="withdrawUsernameInput" placeholder="contoh: sarah_warga" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="withdrawAmountInput">Jumlah Insentif (Poin)</label>
+              <input type="number" id="withdrawAmountInput" min="1" step="1" placeholder="contoh: 100" required />
+            </div>
+
+            <div class="form-actions full-width">
+              <button type="submit" class="btn btn-secondary">Tarik Insentif</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="glass-card table-card">
+        <h3>Daftar Warga Terdaftar</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Wallet Address</th>
+                <th>Total Berat (kg)</th>
+                <th>Saldo Insentif</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="5" class="empty-cell">Memuat data warga...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: LAPORAN TRANSAKSI -->
+    <section id="laporanSection" class="page-section">
+      <div class="glass-card table-card">
+        <div class="table-header-row">
+          <div>
+            <h2>Laporan Transaksi</h2>
+            <p class="section-desc">Riwayat setoran sampah &amp; penarikan insentif beserta hash transaksi.</p>
+          </div>
+          <button id="refreshReportsBtn" type="button" class="btn btn-secondary">Muat Ulang Data</button>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Wallet</th>
+                <th>Jenis</th>
+                <th>Berat (kg)</th>
+                <th>Insentif</th>
+                <th>Tipe</th>
+                <th>Tx Hash</th>
+                <th>Waktu</th>
+              </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+              <tr>
+                <td colspan="9" class="empty-cell">Memuat laporan transaksi...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
